@@ -1,0 +1,17 @@
+{
+	"name": "qb-oauth2-nodejs",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js.js",
+	"scripts": {
+		"start": "node index.js",
+		"dev": "nodemon index.js"
+	},
+	"author": "Ariful Alam",
+	"license": "ISC",
+	"dependencies": {
+		"express": "^4.17.1",
+		"express-session": "^1.17.2",
+		"morgan": "^1.10.0"
+	}
+}
