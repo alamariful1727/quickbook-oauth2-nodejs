@@ -17,4 +17,5 @@ module.exports = {
 			'address',
 		],
 	},
+	NGROK_ENABLED: true,
 };
