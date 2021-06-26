@@ -1,5 +1,4 @@
 const express = require('express');
-const session = require('express-session');
 const morgan = require('morgan');
 const OAuthClient = require('intuit-oauth');
 const config = require('./config');
@@ -10,15 +9,6 @@ const app = express();
 app.use(express.json()); //Used to parse JSON bodies
 app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 app.use(morgan('dev'));
-
-app.use(session({ secret: 'secret', resave: 'false', saveUninitialized: 'false' }));
-
-/**
- * ? App Variables
- * @type {null}
- */
-let oauth2_token_json = null;
-let redirectUri = '';
 
 /**
  * ? Instantiate new Client
@@ -48,7 +38,7 @@ app.get('/authUri', (req, res) => {
 
 	const authUri = oauthClient.authorizeUri({
 		scope: [OAuthClient.scopes.Accounting, OAuthClient.scopes.OpenId],
-		state: 'intuit-test',
+		state: 'qb-oauth2-nodejs-test',
 	});
 
 	res.status(200).json({ authUri });
@@ -59,14 +49,19 @@ app.get('/authUri', (req, res) => {
  */
 app.get('/callback', async (req, res) => {
 	try {
-		console.log('req.url', req.url);
 		let authResponse = await oauthClient.createToken(req.url);
 		oauth2_token_json = JSON.stringify(authResponse.getJson(), null, 2);
-	} catch (error) {
-		console.error(e);
-	}
 
-	res.send('');
+		return res.status(201).json({
+			message: 'success',
+			token: JSON.parse(oauth2_token_json),
+		});
+	} catch (error) {
+		console.error(error);
+		return res.status(500).json({
+			message: error.originalMessage || 'Something went wrong',
+		});
+	}
 });
 
 /**
