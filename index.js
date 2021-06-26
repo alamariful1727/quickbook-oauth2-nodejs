@@ -14,6 +14,20 @@ app.use(morgan('dev'));
 app.use(session({ secret: 'secret', resave: 'false', saveUninitialized: 'false' }));
 
 /**
+ * ? App Variables
+ * @type {null}
+ */
+let oauth2_token_json = null;
+let redirectUri = '';
+
+/**
+ * ? Instantiate new Client
+ * @type {OAuthClient}
+ */
+
+let oauthClient = null;
+
+/**
  * ? Test Route
  */
 app.get('/', (req, res) => {
@@ -38,6 +52,21 @@ app.get('/authUri', (req, res) => {
 	});
 
 	res.status(200).json({ authUri });
+});
+
+/**
+ * ? Handle the callback to extract the `Auth Code` and exchange them for `Bearer-Tokens`
+ */
+app.get('/callback', async (req, res) => {
+	try {
+		console.log('req.url', req.url);
+		let authResponse = await oauthClient.createToken(req.url);
+		oauth2_token_json = JSON.stringify(authResponse.getJson(), null, 2);
+	} catch (error) {
+		console.error(e);
+	}
+
+	res.send('');
 });
 
 /**
