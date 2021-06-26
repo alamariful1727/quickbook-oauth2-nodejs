@@ -17,5 +17,5 @@ module.exports = {
 			'address',
 		],
 	},
-	NGROK_ENABLED: false,
+	NGROK_ENABLED: process.env.NGROK_ENABLED === 'true',
 };

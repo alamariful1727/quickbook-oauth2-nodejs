@@ -1,6 +1,9 @@
 const express = require('express');
 const morgan = require('morgan');
 const OAuthClient = require('intuit-oauth');
+const dotenv = require('dotenv');
+dotenv.config();
+
 const config = require('./config');
 const ngrok = config.NGROK_ENABLED === true ? require('ngrok') : null;
 
@@ -29,10 +32,10 @@ app.get('/', (req, res) => {
  */
 app.get('/authUri', (req, res) => {
 	oauthClient = new OAuthClient({
-		clientId: req.query.clientId,
-		clientSecret: req.query.clientSecret,
-		environment: req.query.environment, // enter either `sandbox` or `production`
-		redirectUri: req.query.redirectUri,
+		clientId: config.clientId,
+		clientSecret: config.clientSecret,
+		environment: 'sandbox', // enter either `sandbox` or `production`
+		redirectUri: req.query.redirectUri || config.redirectUri,
 		logging: true, // by default the value is `false`
 	});
 
@@ -48,13 +51,28 @@ app.get('/authUri', (req, res) => {
  * ? Handle the callback to extract the `Auth Code` and exchange them for `Bearer-Tokens`
  */
 app.get('/callback', async (req, res) => {
-	try {
-		let authResponse = await oauthClient.createToken(req.url);
-		oauth2_token_json = JSON.stringify(authResponse.getJson(), null, 2);
+	if (!oauthClient) {
+		return res.status(500).json({
+			message: 'Please generate /authUri first',
+		});
+	}
 
+	try {
+		const authResponse = await oauthClient.createToken(req.url);
+		/**
+		 * ? token information
+		 * {
+		 * 		x_refresh_token_expires_in: @number
+		 * 		id_token: @string
+		 * 		access_token: @string
+		 * 		refresh_token: @string
+		 * 		expires_in: @number
+		 * 		token_type: @string
+		 * }
+		 */
 		return res.status(201).json({
 			message: 'success',
-			token: JSON.parse(oauth2_token_json),
+			token: authResponse.getJson(),
 		});
 	} catch (error) {
 		console.error(error);
