@@ -1,7 +1,9 @@
 const express = require('express');
 const morgan = require('morgan');
 const OAuthClient = require('intuit-oauth');
+const request = require('request');
 const dotenv = require('dotenv');
+const cors = require('cors');
 dotenv.config();
 
 const config = require('./config');
@@ -12,6 +14,8 @@ const app = express();
 app.use(express.json()); //Used to parse JSON bodies
 app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 app.use(morgan('dev'));
+
+app.use(cors()); // enable CORS - Cross Origin Resource Sharing
 
 /**
  * ? Instantiate new Client
@@ -56,6 +60,7 @@ app.get('/callback', async (req, res) => {
 			message: 'Please generate /authUri first',
 		});
 	}
+	console.log('req.query', req.query);
 
 	try {
 		const authResponse = await oauthClient.createToken(req.url);
@@ -80,6 +85,34 @@ app.get('/callback', async (req, res) => {
 			message: error.originalMessage || 'Something went wrong',
 		});
 	}
+});
+
+/**
+ * ? Retrieve company information
+ */
+app.get('/company/:realmId', async (req, res) => {
+	// Set up API call (with OAuth2 accessToken)
+	const url = config.api_uri + req.params.realmId + '/companyinfo/' + req.params.realmId + '?minorversion=59';
+	console.log('Making API call to: ' + url);
+
+	const requestObj = {
+		url,
+		headers: {
+			Authorization: 'Bearer ' + req.headers['authorization'],
+			Accept: 'application/json',
+		},
+	};
+	request(requestObj, (err, response) => {
+		console.log('🚀 ~ file: index.js ~ line 107 ~ request ~ response.body', response.body);
+		console.log('🚀 ~ file: index.js ~ line 107 ~ request ~ err', err);
+
+		if (err || response.statusCode != 200) {
+			return res.status(response.statusCode).json({ error: err, statusCode: response.statusCode });
+		}
+
+		// API Call was a success!
+		res.json(JSON.parse(response.body));
+	});
 });
 
 /**
